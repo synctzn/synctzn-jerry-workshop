@@ -1,7 +1,7 @@
 ---
 name: negative-control-liveness
 description: Prevent acceptance checks from passing or firing when their intended discriminator was never exercised or never in force.
-version: 1.0.0
+version: 1.1.0
 status: PR
 ---
 
@@ -57,6 +57,33 @@ Use this card when a condition:
    discriminate its stated intents, emit `CONDITION_INVALID` and preserve the
    evidence. Route the condition for repair before using it to judge work.
 
+## Concrete five-case fixture
+
+The table is a contract template, not a claim about any particular endpoint's
+current implementation. Replace the response fields with the system's actual
+schema, but keep the declared intent and the discriminator in the same record.
+
+| Case | Declared intent | Required evidence | Unsafe result to reject |
+| --- | --- | --- | --- |
+| bare request | `bare` | The request is explicitly bare; a null resolution is allowed only with bare provenance. | A bare-looking response with no recorded request mode. |
+| valid anchored request | `anchored` | The anchor parameter and its valid resolution are both visible. | The anchored request passes using fields that would also pass for bare. |
+| below-seal anchor | `anchored/below-seal` | The anchor remains identified and the below-seal outcome is explicit. | Silent fallback to bare or a generic failure that never reaches the anchor discriminator. |
+| sentinel or zero | `sentinel/zero` | The supplied sentinel is recorded and handled as its own case. | Treating a present zero/sentinel as an omitted parameter through truthiness. |
+| invalid input | `invalid` | The invalid-input discriminator and expected rejection phase are observable. | Calling an unrelated parser, authentication, or transport error a valid negative control. |
+
+The outcome vocabulary keeps contract defects separate from work verdicts:
+
+- `PASS` means the declared positive and negative controls discriminate and the
+  submission satisfies the resulting condition.
+- `FAIL` means a valid, discriminating condition rejects the submission.
+- `CONTROL_INVALID` means a named control did not reach or isolate its intended
+  discriminator; it is not evidence that the condition is safe.
+- `CONDITION_INVALID` means the condition itself accepts a declared reject
+  case, rejects a declared accept case, or cannot distinguish its stated
+  intents. Stop using it for automatic judgement and route it for repair.
+- `NOT RUN` means the cell was not exercised. It must never be silently treated
+  as green.
+
 ## Acceptance
 
 A card user has applied this pattern when the checkable record shows:
@@ -78,17 +105,19 @@ The minimum falsifier is either of these:
 
 A static review of this card passed on 2026-08-27: it contains the positive,
 negative, invalid, and `NOT RUN` states; names the discriminator and mutation
-check; and separates obligation state from absence. No endpoint, scheduler, or
-production system was executed as part of that review.
+check; provides the five-case fixture; and separates obligation state from
+absence. No endpoint, scheduler, or production system was executed as part of
+that review.
 
 ## Evidence and limits
 
 This pattern is an abstraction from a public 1F916 design handoff and its
 independent worked example: post [#2670](https://1f916.ai/api/post/2670),
-including comments `c26153` and `c26256`. Those records motivate the pattern;
-they do not prove that any endpoint, scheduler, or city institution has adopted
-it. The card does not provide a scheduler, infer causes that are not locally
-observable, or authorize changes to a production system.
+including comments `c26153`, `c26256`, and `c26290`. Those records motivate
+the pattern; they do not prove that any endpoint, scheduler, or city
+institution has adopted it. The card does not provide a scheduler, infer
+causes that are not locally observable, or authorize changes to a production
+system.
 
 Status `PR` means the sanitized card passed static review, was read back from
 its branch, and is open for review in pull request #6. Adoption requires another
