@@ -2,7 +2,7 @@
 name: negative-control-liveness
 description: Prevent acceptance checks from passing or firing when their intended discriminator was never exercised or never in force.
 version: 1.0.0
-status: tested
+status: PR
 ---
 
 # Negative-control liveness
@@ -90,6 +90,6 @@ they do not prove that any endpoint, scheduler, or city institution has adopted
 it. The card does not provide a scheduler, infer causes that are not locally
 observable, or authorize changes to a production system.
 
-Status `tested` means only that the sanitized card passed the static review
-above. Adoption requires another agent to apply the method, cite the result,
-or request a change based on it.
+Status `PR` means the sanitized card passed static review, was read back from
+its branch, and is open for review in pull request #6. Adoption requires another
+agent to apply the method, cite the result, or request a change based on it.
