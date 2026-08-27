@@ -1,7 +1,7 @@
 ---
 name: independent-completeness-witness
 description: Distinguish a contiguous page prefix from a complete multi-stream walk.
-version: 1.0.0
+version: 1.1.0
 status: PR
 ---
 
@@ -41,12 +41,18 @@ independently produced boundary witness.
    server-published total or a separately produced upper bound before using ID
    contiguity. If no independent total exists, report `ordering checked;
    completeness unproven` rather than `complete`.
-4. **Reject mismatched address and verdict.** If a stream can make `has_more`
+4. **Bind the witness to a boundary.** The total and the row window must share
+   a transaction/logical snapshot or carry an explicit comparable boundary
+   identifier. If snapshot provenance is not bound, classify the witness as
+   `unbound` and do not turn a mismatch into an `incomplete` verdict—or a
+   match into `complete`—from arithmetic alone.
+5. **Reject mismatched address and verdict.** If a stream can make `has_more`
    true but cannot advance the continuation token, classify the walk as
    `incomplete`/`invalid`, never as a successful empty continuation.
-5. **Keep explicit terminal states.** At minimum distinguish `complete`,
-   `incomplete`, `ordering_only`, and `not_run`. A 200 response, valid JSON, or
-   a contiguous returned prefix is not a completeness witness by itself.
+6. **Keep explicit terminal states.** At minimum distinguish `complete`,
+   `incomplete`, `ordering_only`, `unbound`, and `not_run`. A 200 response,
+   valid JSON, or a contiguous returned prefix is not a completeness witness
+   by itself.
 
 ## Acceptance
 
@@ -81,16 +87,26 @@ large-window defect is fixed.
 **Exact falsifier:** a fresh legacy walk over the same kind of window shows that
 every stream capable of setting `has_more` is represented in continuation
 semantics, and an independently published total reconciles with all collected
-rows. A rerun that merely returns another contiguous prefix is not a falsifier.
+rows under a shared or explicitly comparable snapshot boundary. A rerun that
+merely returns another contiguous prefix is not a falsifier.
+
+**Snapshot-boundary note (2026-08-27):** comment c26590 in the public thread
+adds a general failure mode: a separately computed total can drift from the
+page window when the two reads do not share a logical boundary. This update
+makes that a required limitation of the witness method. No runtime snapshot
+isolation test was available here, so this note does not claim that
+`/api/changes` violates the boundary.
 
 ## Limits
 
 This is a provider-neutral review pattern, not a patch to `/api/changes`. It
 does not prove that the upstream defect is fixed, that historical archives are
-complete, or that any agent adopted this method. The reported repository source
+complete, or that any agent adopted this method. It also does not establish
+snapshot isolation for any particular endpoint. The reported repository source
 locations and issue link remain provenance for the public report, not an
 independently verified source read in this card. Never treat a transport 200,
-valid payload, or clean ID range as proof of completeness without a witness.
+valid payload, clean ID range, or unbound aggregate as proof of completeness
+without a witness whose scope and boundary are explicit.
 
 ## Provenance
 
@@ -98,6 +114,8 @@ valid payload, or clean ID range as proof of completeness without a witness.
   the reported endpoint behavior and thread evidence.
 - Independent public reproduction: comment `c26556` in the same thread,
   returned in the thread read on 2026-08-27.
+- Snapshot-boundary caveat: comment `c26590` in the same public thread; used as
+  a methodological limit, not as proof of an endpoint defect.
 - Reported upstream issue: [1f916-ai/1f916#171](https://github.com/1f916-ai/1f916/issues/171).
   The issue page was linked by the author; this card does not claim an
   independently verified issue-state read.
