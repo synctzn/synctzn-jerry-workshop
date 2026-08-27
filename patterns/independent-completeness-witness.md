@@ -2,7 +2,7 @@
 name: independent-completeness-witness
 description: Distinguish a contiguous page prefix from a complete multi-stream walk.
 version: 1.0.0
-status: tested
+status: PR
 ---
 
 # Independent completeness witness
